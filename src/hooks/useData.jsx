@@ -7,15 +7,25 @@ const useData = (url) => {
   const [isError, setIsError] = useState(null);
   
   useEffect(() => {
-    axios.get(url)
+    const controller = new AbortController();
+
+    axios.get(url, { signal: controller.signal })
       .then(({ data }) => setData(data))
-      .catch((err) => {
-        console.error(err);
-        setIsError(true);
+      .catch(e => {
+        if(e.name === 'AbortError') {
+          console.log('Cancel');
+        } else {
+          setIsError(e);
+        }
       })
       .finally(() => {
         setIsLoading(false);
       })
+
+      return () => {
+        controller.abort();
+      };
+
   }, [url]);
 
   return [data, isLoading, isError];
